@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace InventoryManagerREST_API.Repositories
 {
-    public class ProductRepository
+    public class ProductRepository : IProductRepository
     {
 
 

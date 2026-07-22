@@ -6,9 +6,9 @@ namespace InventoryManagerREST_API.Services
     public class InventoryService : IInventoryService
     {
         private readonly List<Product> products;
-        private readonly ProductRepository productRepository;
+        private readonly IProductRepository productRepository;
 
-        public InventoryService(ProductRepository productRepository)
+        public InventoryService(IProductRepository productRepository)
         {
             this.productRepository = productRepository;
             products = productRepository.LoadProducts();
@@ -24,8 +24,15 @@ namespace InventoryManagerREST_API.Services
             return products.FirstOrDefault(p => p.ProductId == id);
         }
 
-        public void AddProduct(Product product)
+        public string? AddProduct(Product product)
         {
+
+            string? validationError = ValidateProduct(product);
+
+            if (validationError != null)
+            {
+                return validationError;
+            }
 
             int newId = products.Count == 0
                 ? 1
@@ -34,20 +41,30 @@ namespace InventoryManagerREST_API.Services
             products.Add(product);
             productRepository.SaveProducts(products);
 
+            return null;
+
         }
 
-        public bool ProductExists(string sku)
+        private bool ProductExists(string sku, int? productIdToIgnore = null)
         {
-            return products.Any(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase));
+            return products.Any(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase) 
+            && p.ProductId != productIdToIgnore);
         }
 
-        public bool UpdateProduct(int id, Product updatedProduct)
+        public string? UpdateProduct(int id, Product updatedProduct)
         {
             Product? existingProduct = SearchProductById(id);
 
             if (existingProduct == null)
             {
-                return false;
+                return "Product not found.";
+            }
+
+            string? validationError = ValidateProduct(updatedProduct, id);
+
+            if (validationError != null)
+            {
+                return validationError;
             }
 
             existingProduct.Name = updatedProduct.Name;
@@ -58,7 +75,7 @@ namespace InventoryManagerREST_API.Services
 
             productRepository.SaveProducts(products);
 
-            return true;
+            return null;
 
         }
 
@@ -72,6 +89,36 @@ namespace InventoryManagerREST_API.Services
             products.Remove(productToDelete);
             productRepository.SaveProducts(products);
             return true;
+        }
+
+        private string? ValidateProduct(Product product, int? productIdToIgnore = null)
+        {
+            if (string.IsNullOrWhiteSpace(product.Name))
+            {
+                return "Product name cannot be empty.";
+            }
+
+            if (product.Price <= 0)
+            {
+                return "Product price must be greater than zero.";
+            }
+
+            if (product.QuantityOnHand < 0)
+            {
+                return "Product quantity on hand cannot be negative.";
+            }
+
+            if (string.IsNullOrWhiteSpace(product.SKU))
+            {
+                return "Product SKU cannot be empty.";
+            }
+
+            if (ProductExists(product.SKU, productIdToIgnore))
+            {
+                return "A product with the same SKU already exists.";
+            }
+
+            return null;
         }
 
     }

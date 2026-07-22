@@ -6,9 +6,8 @@ namespace InventoryManagerREST_API.Services
     {
         List<Product> GetAllProducts();
         Product? SearchProductById(int id);
-        void AddProduct(Product product);
-        bool ProductExists(string sku);
-        bool UpdateProduct(int id, Product updatedProduct);
+        string? AddProduct(Product product);
+        string? UpdateProduct(int id, Product updatedProduct);
         bool DeleteProduct(int id);
     }
 }

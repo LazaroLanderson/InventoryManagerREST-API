@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<ProductRepository>();
+builder.Services.AddSingleton<IProductRepository, ProductRepository>();
 builder.Services.AddSingleton<IInventoryService, InventoryService>();
 
 var app = builder.Build();

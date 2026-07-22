@@ -60,28 +60,12 @@ namespace InventoryManagerREST_API.Controllers
                 return BadRequest();
             }
 
-            if (string.IsNullOrWhiteSpace(product.Name))
+            string? error = inventoryService.AddProduct(product);
+
+            if (error != null)
             {
-                return BadRequest("Product name cannot be empty.");
+                return BadRequest(error);
             }
-
-            if (product.Price <= 0)
-            {
-                return BadRequest("Product price must be greater than zero.");
-            }
-
-            if (product.QuantityOnHand < 0)
-            {
-                return BadRequest("Product quantity on hand cannot be negative.");
-            }
-
-            if (inventoryService.ProductExists(product.SKU))
-            {
-                return BadRequest("A product with the same SKU already exists.");
-            }
-
-
-            inventoryService.AddProduct(product);
 
             return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, product);
         }
@@ -101,26 +85,16 @@ namespace InventoryManagerREST_API.Controllers
                 return BadRequest("Product ID mismatch.");
             }
 
-            if (string.IsNullOrWhiteSpace(updatedProduct.Name))
+            string? error = inventoryService.UpdateProduct(id, updatedProduct);
+
+            if (error == "Product not found.")
             {
-                return BadRequest("Product name cannot be empty.");
+                return NotFound(error);
             }
 
-            if (updatedProduct.Price <= 0)
+            if (error != null)
             {
-                return BadRequest("Product price must be greater than zero.");
-            }
-
-            if (updatedProduct.QuantityOnHand < 0)
-            {
-                return BadRequest("Product quantity on hand cannot be negative.");
-            }
-
-            bool success = inventoryService.UpdateProduct(id, updatedProduct);
-
-            if (success == false)
-            {
-                return NotFound();
+                return BadRequest(error);
             }
 
             return NoContent();
