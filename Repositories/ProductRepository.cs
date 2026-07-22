@@ -16,6 +16,8 @@ namespace InventoryManagerREST_API.Repositories
             {
                 File.Create(filePath).Close();
             }
+
+            products = LoadProducts();
         }
 
         private readonly string filePath = Path.Combine("Data", "Products.json");
@@ -72,7 +74,51 @@ namespace InventoryManagerREST_API.Repositories
 
         }
 
+        private readonly List<Product> products;
 
+        public List<Product> GetAllProducts()
+        {
+            return products;
+        }
+
+        public Product? SearchProductById(int id)
+        {
+            return products.FirstOrDefault(p => p.ProductId == id);
+        }
+
+        public void AddProduct(Product product)
+        {
+            products.Add(product);
+            SaveProducts(products);
+        }
+
+
+        public void UpdateProduct(Product product)
+        {
+            SaveProducts(products);
+        }
+
+        public bool DeleteProduct(int id)
+        {
+            Product? product = SearchProductById(id);
+
+            if (product == null)
+            {
+                return false;
+            }
+
+            products.Remove(product);
+            SaveProducts(products);
+
+            return true;
+
+        }
+
+        public bool ProductExists(string sku, int? productIdToIgnore = null)
+        {
+            return products.Any(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase)
+            && p.ProductId != productIdToIgnore);
+        }
 
     }
 }

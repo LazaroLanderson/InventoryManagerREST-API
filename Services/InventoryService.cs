@@ -5,23 +5,21 @@ namespace InventoryManagerREST_API.Services
 {
     public class InventoryService : IInventoryService
     {
-        private readonly List<Product> products;
         private readonly IProductRepository productRepository;
 
         public InventoryService(IProductRepository productRepository)
         {
             this.productRepository = productRepository;
-            products = productRepository.LoadProducts();
         }
 
         public List<Product> GetAllProducts()
         {
-            return products;
+            return productRepository.GetAllProducts();
         }
 
         public Product? SearchProductById(int id)
         {
-            return products.FirstOrDefault(p => p.ProductId == id);
+            return productRepository.SearchProductById(id);
         }
 
         public string? AddProduct(Product product)
@@ -34,12 +32,13 @@ namespace InventoryManagerREST_API.Services
                 return validationError;
             }
 
+            List<Product> products = productRepository.GetAllProducts();
+
             int newId = products.Count == 0
                 ? 1
                 : products.Max(p => p.ProductId) + 1;
             product.ProductId = newId;
-            products.Add(product);
-            productRepository.SaveProducts(products);
+            productRepository.AddProduct(product);
 
             return null;
 
@@ -47,8 +46,7 @@ namespace InventoryManagerREST_API.Services
 
         private bool ProductExists(string sku, int? productIdToIgnore = null)
         {
-            return products.Any(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase) 
-            && p.ProductId != productIdToIgnore);
+            return productRepository.ProductExists(sku, productIdToIgnore);
         }
 
         public string? UpdateProduct(int id, Product updatedProduct)
@@ -73,7 +71,7 @@ namespace InventoryManagerREST_API.Services
             existingProduct.Price = updatedProduct.Price;
             existingProduct.QuantityOnHand = updatedProduct.QuantityOnHand;
 
-            productRepository.SaveProducts(products);
+            productRepository.UpdateProduct(existingProduct);
 
             return null;
 
@@ -81,14 +79,7 @@ namespace InventoryManagerREST_API.Services
 
         public bool DeleteProduct(int id)
         {
-            Product? productToDelete = SearchProductById(id);
-            if (productToDelete == null)
-            {
-                return false;
-            }
-            products.Remove(productToDelete);
-            productRepository.SaveProducts(products);
-            return true;
+            return productRepository.DeleteProduct(id);
         }
 
         private string? ValidateProduct(Product product, int? productIdToIgnore = null)
