@@ -18,15 +18,29 @@ namespace InventoryManagerREST_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAllProducts()
+        public IActionResult GetAllProducts([FromQuery] string? sortBy)
         {
             var products = inventoryService.GetAllProducts();
+            if ((sortBy ?? string.Empty).Equals("name", StringComparison.OrdinalIgnoreCase))
+            {
+                products = products.OrderBy(p => p.Name).ToList();
+            }
+            else if ((sortBy ?? string.Empty).Equals("price", StringComparison.OrdinalIgnoreCase))
+            {
+                products = products.OrderBy(p => p.Price).ToList();
+            }
             return Ok(products);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetProductById(int id)
         {
+
+            if (id <= 0)
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
             var product = inventoryService.SearchProductById(id);
 
             if (product == null)
@@ -46,6 +60,21 @@ namespace InventoryManagerREST_API.Controllers
                 return BadRequest();
             }
 
+            if (string.IsNullOrWhiteSpace(product.Name))
+            {
+                return BadRequest("Product name cannot be empty.");
+            }
+
+            if (product.Price <= 0)
+            {
+                return BadRequest("Product price must be greater than zero.");
+            }
+
+            if (product.QuantityOnHand < 0)
+            {
+                return BadRequest("Product quantity on hand cannot be negative.");
+            }
+
             if (inventoryService.ProductExists(product.SKU))
             {
                 return BadRequest("A product with the same SKU already exists.");
@@ -57,6 +86,62 @@ namespace InventoryManagerREST_API.Controllers
             return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, product);
         }
 
-    }
 
+        [HttpPut("{id}")]
+        public IActionResult UpdateProduct(int id, [FromBody] Product updatedProduct)
+        {
+
+            if (id <= 0)
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            if (id != updatedProduct.ProductId)
+            {
+                return BadRequest("Product ID mismatch.");
+            }
+
+            if (string.IsNullOrWhiteSpace(updatedProduct.Name))
+            {
+                return BadRequest("Product name cannot be empty.");
+            }
+
+            if (updatedProduct.Price <= 0)
+            {
+                return BadRequest("Product price must be greater than zero.");
+            }
+
+            if (updatedProduct.QuantityOnHand < 0)
+            {
+                return BadRequest("Product quantity on hand cannot be negative.");
+            }
+
+            bool success = inventoryService.UpdateProduct(id, updatedProduct);
+
+            if (success == false)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteProduct(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            bool success = inventoryService.DeleteProduct(id);
+            if (!success)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
+    }
 }

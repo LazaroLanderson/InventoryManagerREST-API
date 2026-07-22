@@ -41,5 +41,38 @@ namespace InventoryManagerREST_API.Services
             return products.Any(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase));
         }
 
+        public bool UpdateProduct(int id, Product updatedProduct)
+        {
+            Product? existingProduct = SearchProductById(id);
+
+            if (existingProduct == null)
+            {
+                return false;
+            }
+
+            existingProduct.Name = updatedProduct.Name;
+            existingProduct.Description = updatedProduct.Description;
+            existingProduct.SKU = updatedProduct.SKU;
+            existingProduct.Price = updatedProduct.Price;
+            existingProduct.QuantityOnHand = updatedProduct.QuantityOnHand;
+
+            productRepository.SaveProducts(products);
+
+            return true;
+
+        }
+
+        public bool DeleteProduct(int id)
+        {
+            Product? productToDelete = SearchProductById(id);
+            if (productToDelete == null)
+            {
+                return false;
+            }
+            products.Remove(productToDelete);
+            productRepository.SaveProducts(products);
+            return true;
+        }
+
     }
 }

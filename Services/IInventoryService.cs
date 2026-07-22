@@ -8,5 +8,7 @@ namespace InventoryManagerREST_API.Services
         Product? SearchProductById(int id);
         void AddProduct(Product product);
         bool ProductExists(string sku);
+        bool UpdateProduct(int id, Product updatedProduct);
+        bool DeleteProduct(int id);
     }
 }
